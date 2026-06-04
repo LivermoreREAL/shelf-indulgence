@@ -540,6 +540,92 @@
       margin-top: 6px;
     }
 
+    /* ── CARD ACTIONS (likes & comments) ── */
+    .card-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+      align-items: center;
+      clear: both;
+    }
+    .like-btn {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: none;
+      border: 1.5px solid var(--border);
+      border-radius: 20px;
+      padding: 5px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      color: var(--muted);
+      font-family: inherit;
+    }
+    .like-btn.liked { background: #FEF0F0; border-color: var(--red); color: var(--red); }
+    .like-btn:hover { opacity: 0.8; }
+    .comment-toggle {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: none;
+      border: 1.5px solid var(--border);
+      border-radius: 20px;
+      padding: 5px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--muted);
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+    .comment-toggle:hover { opacity: 0.8; }
+    .comments-section {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+    .comment-item {
+      margin-bottom: 10px;
+      padding: 9px 11px;
+      background: var(--bg);
+      border-radius: 9px;
+    }
+    .comment-author { font-weight: 700; font-size: 12px; color: var(--text); }
+    .comment-body   { font-size: 13px; margin-top: 3px; line-height: 1.45; color: #2a2a2a; }
+    .comment-time   { font-size: 11px; color: var(--muted); margin-top: 3px; }
+    .comment-form   { display: flex; gap: 8px; margin-top: 10px; align-items: center; }
+    .comment-input {
+      flex: 1;
+      padding: 9px 13px;
+      border: 1.5px solid var(--border);
+      border-radius: 20px;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      background: white;
+      transition: border-color 0.15s;
+    }
+    .comment-input:focus { border-color: var(--black); }
+    .comment-submit {
+      background: var(--black);
+      color: white;
+      border: none;
+      padding: 9px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      flex-shrink: 0;
+    }
+    .comment-submit:hover { opacity: 0.85; }
+    .commenting-as { font-size: 11px; color: var(--muted); margin-top: 6px; }
+    .commenting-as a { color: var(--blue); cursor: pointer; margin-left: 4px; text-decoration: underline; }
+
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <!-- iPhone "Add to Home Screen" support -->
@@ -902,6 +988,7 @@ function renderDeck() {
         <div class="book-title">${esc(b.title)}</div>
         ${b.author ? `<div class="book-author">${esc(b.author)}</div>` : ''}
         ${b.suggested_by ? `<div class="book-meta">Suggested by ${esc(b.suggested_by)}</div>` : ''}
+        ${cardActions('on_deck', b.id)}
       </div>
       <button class="del-btn" onclick="deleteDeck(${b.id})" title="Remove">✕</button>
     </div>
@@ -929,6 +1016,7 @@ function renderPicks() {
       <div class="pick-who">👤 ${esc(p.member)}</div>
       ${p.note ? `<div class="pick-note">${esc(p.note)}</div>` : ''}
       <button class="del-btn" style="float:right;margin-top:-10px;" onclick="deletePick(${p.id}, ${JSON.stringify(p.image_url || '')})" title="Remove">✕</button>
+      ${cardActions('member_picks', p.id)}
     </div>
   `).join('');
 }
@@ -952,6 +1040,7 @@ function renderSkip() {
       <div class="pick-who">👤 ${esc(p.member)}</div>
       ${p.reason ? `<div class="skip-reason">⚠️ ${esc(p.reason)}</div>` : ''}
       <button class="del-btn" style="float:right;margin-top:-10px;" onclick="deleteSkip(${p.id}, ${JSON.stringify(p.image_url || '')})" title="Remove">✕</button>
+      ${cardActions('skip_list', p.id)}
     </div>
   `).join('');
 }
@@ -1133,17 +1222,173 @@ function renderGenres() {
   }).join('');
 }
 
+// ── NAME PERSISTENCE ──
+let myName = localStorage.getItem('shelf_myName') || '';
+
+function ensureName() {
+  if (myName) return true;
+  const n = prompt('Enter your name to like or comment:');
+  if (!n || !n.trim()) return false;
+  myName = n.trim();
+  localStorage.setItem('shelf_myName', myName);
+  return true;
+}
+
+// ── LIKES ──
+let likesMap = {};
+
+async function loadLikesAll() {
+  if (!sb) return;
+  const { data } = await sb.from('item_likes').select('table_name, item_id, author_name');
+  if (data) {
+    data.forEach(l => {
+      const key = l.table_name + ':' + l.item_id;
+      if (!likesMap[key]) likesMap[key] = [];
+      likesMap[key].push(l.author_name);
+    });
+  }
+}
+
+function getLikeCount(tableName, itemId) {
+  return (likesMap[tableName + ':' + itemId] || []).length;
+}
+
+function didILike(tableName, itemId) {
+  return !!(myName && (likesMap[tableName + ':' + itemId] || []).includes(myName));
+}
+
+async function toggleLike(tableName, itemId, btnEl) {
+  if (!ensureName()) return;
+  const key = tableName + ':' + itemId;
+  if (didILike(tableName, itemId)) {
+    await sb.from('item_likes').delete().eq('table_name', tableName).eq('item_id', itemId).eq('author_name', myName);
+    likesMap[key] = (likesMap[key] || []).filter(n => n !== myName);
+  } else {
+    await sb.from('item_likes').insert({ table_name: tableName, item_id: itemId, author_name: myName });
+    if (!likesMap[key]) likesMap[key] = [];
+    likesMap[key].push(myName);
+  }
+  const liked = didILike(tableName, itemId);
+  btnEl.className = 'like-btn' + (liked ? ' liked' : '');
+  btnEl.innerHTML = '👍 ' + getLikeCount(tableName, itemId);
+}
+
+// ── COMMENTS ──
+let commentsCache = {};
+
+async function loadAllComments() {
+  if (!sb) return;
+  const { data } = await sb.from('item_comments').select('*').order('created_at', { ascending: true });
+  if (data) {
+    data.forEach(c => {
+      const key = c.table_name + ':' + c.item_id;
+      if (!commentsCache[key]) commentsCache[key] = [];
+      commentsCache[key].push(c);
+    });
+  }
+}
+
+function getCommentCount(tableName, itemId) {
+  return (commentsCache[tableName + ':' + itemId] || []).length;
+}
+
+function cardActions(tableName, itemId) {
+  const liked = didILike(tableName, itemId);
+  return '<div class="card-actions">'
+    + '<button class="like-btn' + (liked ? ' liked' : '') + '" onclick="toggleLike(\'' + tableName + '\',' + itemId + ',this)">👍 ' + getLikeCount(tableName, itemId) + '</button>'
+    + '<button class="comment-toggle" id="cbtn-' + tableName + '-' + itemId + '" onclick="toggleComments(\'' + tableName + '\',' + itemId + ',this)">💬 ' + getCommentCount(tableName, itemId) + '</button>'
+    + '</div>';
+}
+
+function fmtTime(ts) {
+  const d = new Date(ts);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' · ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+}
+
+function renderCommentsSection(section, tableName, itemId) {
+  const comments = commentsCache[tableName + ':' + itemId] || [];
+  const commentHtml = comments.length === 0
+    ? '<p style="color:var(--muted);font-size:13px;margin-bottom:8px;">No comments yet. Be the first!</p>'
+    : comments.map(c =>
+        '<div class="comment-item">'
+        + '<div class="comment-author">' + esc(c.author_name) + '</div>'
+        + '<div class="comment-body">' + esc(c.body) + '</div>'
+        + '<div class="comment-time">' + fmtTime(c.created_at) + '</div>'
+        + '</div>'
+      ).join('');
+  const whoLine = myName
+    ? 'Commenting as <strong>' + esc(myName) + '</strong><a onclick="changeName()">change</a>'
+    : '<a onclick="changeName()">Set your name</a> to comment';
+  section.innerHTML = commentHtml
+    + '<div class="comment-form">'
+    + '<input class="comment-input" placeholder="Add a comment…" id="cinput-' + tableName + '-' + itemId + '" maxlength="500">'
+    + '<button class="comment-submit" onclick="submitComment(\'' + tableName + '\',' + itemId + ')">Post</button>'
+    + '</div>'
+    + '<div class="commenting-as">' + whoLine + '</div>';
+}
+
+function toggleComments(tableName, itemId, btnEl) {
+  const sectionId = 'cmts-' + tableName + '-' + itemId;
+  let section = document.getElementById(sectionId);
+  if (section) {
+    section.style.display = section.style.display === 'none' ? 'block' : 'none';
+    return;
+  }
+  section = document.createElement('div');
+  section.id = sectionId;
+  section.className = 'comments-section';
+  btnEl.closest('.book-card, .pick-card').appendChild(section);
+  renderCommentsSection(section, tableName, itemId);
+}
+
+async function submitComment(tableName, itemId) {
+  if (!ensureName()) return;
+  const inputEl = document.getElementById('cinput-' + tableName + '-' + itemId);
+  const body = (inputEl.value || '').trim();
+  if (!body) return;
+  const submitBtn = inputEl.nextElementSibling;
+  submitBtn.disabled = true;
+  submitBtn.textContent = '…';
+  const { data, error } = await sb.from('item_comments').insert({
+    table_name: tableName, item_id: itemId, author_name: myName, body
+  }).select().single();
+  submitBtn.disabled = false;
+  submitBtn.textContent = 'Post';
+  if (!error && data) {
+    const key = tableName + ':' + itemId;
+    if (!commentsCache[key]) commentsCache[key] = [];
+    commentsCache[key].push(data);
+    inputEl.value = '';
+    const sectionId = 'cmts-' + tableName + '-' + itemId;
+    const section = document.getElementById(sectionId);
+    if (section) renderCommentsSection(section, tableName, itemId);
+    const cbtn = document.getElementById('cbtn-' + tableName + '-' + itemId);
+    if (cbtn) cbtn.innerHTML = '💬 ' + getCommentCount(tableName, itemId);
+  }
+}
+
+function changeName() {
+  const n = prompt('Enter your name:', myName);
+  if (n && n.trim()) {
+    myName = n.trim();
+    localStorage.setItem('shelf_myName', myName);
+    document.querySelectorAll('.commenting-as strong').forEach(el => el.textContent = myName);
+  }
+}
+
 // ── INIT ──
 async function init() {
   renderRead();
   renderGenres();
   if (sb) {
-    const [d, p, s] = await Promise.all([
+    const results = await Promise.all([
       dbLoad('on_deck'),
       dbLoad('member_picks'),
       dbLoad('skip_list'),
+      loadLikesAll(),
+      loadAllComments(),
     ]);
-    deckData = d; picksData = p; skipData = s;
+    deckData = results[0]; picksData = results[1]; skipData = results[2];
   }
   renderDeck(); renderPicks(); renderSkip();
 }
