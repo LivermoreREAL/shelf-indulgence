@@ -828,6 +828,18 @@
         </select>
       </div>
 
+      <!-- Category (deck) -->
+      <div class="fg" id="grpCategory" style="display:none;">
+        <label class="flabel">Category (optional)</label>
+        <input type="text" class="finput" id="fCategory" placeholder="e.g. Historical Literary Fiction..." autocomplete="off">
+      </div>
+
+      <!-- Good Reads Genre (deck) -->
+      <div class="fg" id="grpGenre" style="display:none;">
+        <label class="flabel">Good Reads Genre (optional)</label>
+        <input type="text" class="finput" id="fGoodreadsGenre" placeholder="e.g. Historical Fiction/Fiction..." autocomplete="off">
+      </div>
+
       <!-- Note / Why recommend -->
       <div class="fg" id="grpNote">
         <label class="flabel" id="noteLabel">Why it's worth it</label>
@@ -988,6 +1000,8 @@ function renderDeck() {
         <div class="book-title">${esc(b.title)}</div>
         ${b.author ? `<div class="book-author">${esc(b.author)}</div>` : ''}
         ${b.suggested_by ? `<div class="book-meta">Suggested by ${esc(b.suggested_by)}</div>` : ''}
+        ${b.category ? `<div class="book-meta">📚 ${esc(b.category)}</div>` : ''}
+        ${b.goodreads_genre ? `<div class="book-meta" style="color:var(--muted);font-size:11px;">GR: ${esc(b.goodreads_genre)}</div>` : ''}
         ${cardActions('on_deck', b.id)}
       </div>
       <button class="del-btn" onclick="deleteDeck(${b.id})" title="Remove">✕</button>
@@ -1076,13 +1090,13 @@ function openModal(mode) {
 
   const show = id => { const e = document.getElementById(id); if(e) e.style.display='block'; };
   const hide = id => { const e = document.getElementById(id); if(e) e.style.display='none';  };
-  ['grpMember','grpType','grpAuthor','grpSugBy','grpNote','grpReason','grpImage'].forEach(hide);
+  ['grpMember','grpType','grpAuthor','grpSugBy','grpCategory','grpGenre','grpNote','grpReason','grpImage'].forEach(hide);
 
   if (mode === 'deck') {
     document.getElementById('modalTitle').textContent = 'Nominate a Book';
     document.getElementById('submitBtn').textContent  = 'Add to On Deck';
     document.getElementById('submitBtn').className    = 'submit-btn';
-    show('grpAuthor'); show('grpSugBy');
+    show('grpAuthor'); show('grpSugBy'); show('grpCategory'); show('grpGenre');
     document.getElementById('authorLabel').textContent = 'Author';
   }
   if (mode === 'picks') {
@@ -1128,8 +1142,10 @@ async function submitForm(e) {
   if (mode === 'deck') {
     const row = {
       title,
-      author:       document.getElementById('fAuthor').value.trim() || null,
-      suggested_by: document.getElementById('fSugBy').value || null,
+      author:          document.getElementById('fAuthor').value.trim() || null,
+      suggested_by:    document.getElementById('fSugBy').value || null,
+      category:        document.getElementById('fCategory').value.trim() || null,
+      goodreads_genre: document.getElementById('fGoodreadsGenre').value.trim() || null,
     };
     const saved = await dbInsert('on_deck', row);
     if (saved) { deckData.unshift(saved); renderDeck(); }
