@@ -626,6 +626,18 @@
     .commenting-as { font-size: 11px; color: var(--muted); margin-top: 6px; }
     .commenting-as a { color: var(--blue); cursor: pointer; margin-left: 4px; text-decoration: underline; }
 
+    /* ── BOOK COVER THUMBNAIL ── */
+    .book-cover {
+      width: 52px;
+      min-height: 72px;
+      border-radius: 5px;
+      object-fit: cover;
+      flex-shrink: 0;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+      background: var(--border);
+      align-self: stretch;
+    }
+
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <!-- iPhone "Add to Home Screen" support -->
@@ -690,7 +702,8 @@
 
   <div class="sub-label" style="margin-top:16px;">Currently Reading</div>
   <div class="book-card" style="border-left: 4px solid var(--green);">
-    <div class="spine" style="background:var(--green);"></div>
+    <img class="book-cover" src="https://covers.openlibrary.org/b/id/8578655-M.jpg" alt="The Book of the Unnamed Midwife cover" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+    <div class="spine" style="background:var(--green);display:none;"></div>
     <div class="book-info">
       <div class="book-title">The Book of the Unnamed Midwife</div>
       <div class="book-author">Meg Elison</div>
@@ -882,22 +895,22 @@ const SPINE_COLORS = [
 function spineColor(i) { return SPINE_COLORS[i % SPINE_COLORS.length]; }
 
 const BOOKS_READ = [
-  { title: "Brown Girls",                                        author: "Daphne Palasi Andreades", meeting: "May 2026"       },
-  { title: "The Enchanted Hacienda",                            author: "J.C. Cervantes",          meeting: "April 2026"     },
-  { title: "Crying in H Mart",                                  author: "Michelle Zauner",          meeting: "March 2026"     },
-  { title: "Shine Bright",                                      author: "Danyel Smith",             meeting: "February 2026"  },
-  { title: "In the Time of the Butterflies",                    author: "Julia Alvarez",            meeting: "February 2026"  },
-  { title: "The Night Watchman",                                author: "Louise Erdrich",           meeting: "November 2025"  },
-  { title: "Horse Barbie",                                      author: "Geena Rocero",             meeting: "October 2025"   },
-  { title: "Mexican Gothic",                                    author: "Silvia Moreno-Garcia",     meeting: "September 2025" },
-  { title: "The Nightingale",                                   author: "Kristin Hannah",           meeting: "August 2025"    },
-  { title: "The Curious Incident of the Dog in the Night-Time", author: "Mark Haddon",             meeting: "July 2025"      },
-  { title: "The Song of Achilles",                              author: "Madeline Miller",          meeting: "June 2025"      },
-  { title: "The Emperor of Gladness",                           author: "Ocean Vuong",              meeting: "May 2025"       },
-  { title: "The City of Brass",                                 author: "S.A. Chakraborty",         meeting: "April 2025"     },
-  { title: "Worry",                                             author: "Alexandra Tanner",         meeting: "March 2025"     },
-  { title: "All Fours",                                         author: "Miranda July",             meeting: "February 2025"  },
-  { title: "In Five Years",                                     author: "Rebecca Serle",            meeting: "January 2025"   },
+  { title: "Brown Girls",                                        author: "Daphne Palasi Andreades", meeting: "May 2026",       cover: 11029524 },
+  { title: "The Enchanted Hacienda",                            author: "J.C. Cervantes",          meeting: "April 2026",     cover: 14349362 },
+  { title: "Crying in H Mart",                                  author: "Michelle Zauner",          meeting: "March 2026",     cover: 10462708 },
+  { title: "Shine Bright",                                      author: "Danyel Smith",             meeting: "February 2026",  cover: 12731009 },
+  { title: "In the Time of the Butterflies",                    author: "Julia Alvarez",            meeting: "February 2026",  cover: 391881   },
+  { title: "The Night Watchman",                                author: "Louise Erdrich",           meeting: "November 2025",  cover: 9286141  },
+  { title: "Horse Barbie",                                      author: "Geena Rocero",             meeting: "October 2025",   cover: null     },
+  { title: "Mexican Gothic",                                    author: "Silvia Moreno-Garcia",     meeting: "September 2025", cover: 10239163 },
+  { title: "The Nightingale",                                   author: "Kristin Hannah",           meeting: "August 2025",    cover: 8314147  },
+  { title: "The Curious Incident of the Dog in the Night-Time", author: "Mark Haddon",             meeting: "July 2025",      cover: 7890719  },
+  { title: "The Song of Achilles",                              author: "Madeline Miller",          meeting: "June 2025",      cover: 7098465  },
+  { title: "The Emperor of Gladness",                           author: "Ocean Vuong",              meeting: "May 2025",       cover: 15146234 },
+  { title: "The City of Brass",                                 author: "S.A. Chakraborty",         meeting: "April 2025",     cover: 8536739  },
+  { title: "Worry",                                             author: "Alexandra Tanner",         meeting: "March 2025",     cover: 14751855 },
+  { title: "All Fours",                                         author: "Miranda July",             meeting: "February 2025",  cover: 14610346 },
+  { title: "In Five Years",                                     author: "Rebecca Serle",            meeting: "January 2025",   cover: 9293925  },
 ];
 
 let deckData = [], picksData = [], skipData = [];
@@ -974,16 +987,24 @@ document.getElementById('fImage').addEventListener('change', function() {
 
 // ── RENDER: BOOKS READ ──
 function renderRead() {
-  document.getElementById('readList').innerHTML = BOOKS_READ.map((b, i) => `
+  document.getElementById('readList').innerHTML = BOOKS_READ.map((b, i) => {
+    const coverUrl = b.cover ? `https://covers.openlibrary.org/b/id/${b.cover}-M.jpg` : null;
+    const imgEl = coverUrl
+      ? `<img class="book-cover" src="${coverUrl}" alt="${esc(b.title)} cover" loading="lazy"
+           onerror="this.style.display='none';this.nextElementSibling.style.display='block'">`
+      : '';
+    const spineStyle = coverUrl ? 'display:none;' : '';
+    return `
     <div class="book-card">
-      <div class="spine" style="background:${spineColor(i)};"></div>
+      ${imgEl}
+      <div class="spine" style="background:${spineColor(i)};${spineStyle}"></div>
       <div class="book-info">
         <div class="book-title">${esc(b.title)}</div>
         <div class="book-author">${esc(b.author)}</div>
         <div class="book-meta">📅 ${b.meeting} meeting</div>
       </div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 }
 
 // ── RENDER: ON DECK ──
