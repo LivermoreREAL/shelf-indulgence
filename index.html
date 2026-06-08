@@ -902,7 +902,7 @@ const BOOKS_READ = [
   { title: "Shine Bright",                                      author: "Danyel Smith",             meeting: "February 2026",  cover: 12731009 },
   { title: "In the Time of the Butterflies",                    author: "Julia Alvarez",            meeting: "February 2026",  cover: 391881   },
   { title: "The Night Watchman",                                author: "Louise Erdrich",           meeting: "November 2025",  cover: 9286141  },
-  { title: "Horse Barbie",                                      author: "Geena Rocero",             meeting: "October 2025",   cover: null     },
+  { title: "Horse Barbie",                                      author: "Geena Rocero",             meeting: "October 2025",   cover: null, cover_url: "https://m.media-amazon.com/images/S/compressed.photo.goodreads.com/books/1707878936i/208476368.jpg" },
   { title: "Mexican Gothic",                                    author: "Silvia Moreno-Garcia",     meeting: "September 2025", cover: 10239163 },
   { title: "The Nightingale",                                   author: "Kristin Hannah",           meeting: "August 2025",    cover: 8314147  },
   { title: "The Curious Incident of the Dog in the Night-Time", author: "Mark Haddon",             meeting: "July 2025",      cover: 7890719  },
@@ -989,7 +989,7 @@ document.getElementById('fImage').addEventListener('change', function() {
 // ── RENDER: BOOKS READ ──
 function renderRead() {
   document.getElementById('readList').innerHTML = BOOKS_READ.map((b, i) => {
-    const coverUrl = b.cover ? `https://covers.openlibrary.org/b/id/${b.cover}-M.jpg` : null;
+    const coverUrl = b.cover_url || (b.cover ? `https://covers.openlibrary.org/b/id/${b.cover}-M.jpg` : null);
     const imgEl = coverUrl
       ? `<img class="book-cover" src="${coverUrl}" alt="${esc(b.title)} cover" loading="lazy"
            onerror="this.style.display='none';this.nextElementSibling.style.display='block'">`
