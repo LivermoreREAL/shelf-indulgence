@@ -486,6 +486,16 @@
       margin-top: 10px;
       display: block;
     }
+    /* Skip list images — smaller, full image visible, no cropping */
+    #sec-skip .card-image {
+      width: auto;
+      max-width: 100%;
+      max-height: 130px;
+      object-fit: contain;
+      display: block;
+      margin: 10px auto 0;
+      border-radius: 6px;
+    }
 
   
     /* ── GENRE CARDS ── */
@@ -644,6 +654,18 @@
       flex-shrink: 0;
       align-self: flex-start;
       box-shadow: 0 2px 8px rgba(0,0,0,0.22);
+      background: var(--border);
+    }
+    /* Smaller full-image variant used in Skip List */
+    .book-cover-sm {
+      width: 46px;
+      height: 64px;
+      border-radius: 4px;
+      object-fit: contain;
+      object-position: center;
+      flex-shrink: 0;
+      align-self: flex-start;
+      box-shadow: 0 1px 5px rgba(0,0,0,0.18);
       background: var(--border);
     }
 
@@ -1093,7 +1115,7 @@ function renderSkip() {
     return `
     <div class="pick-card${thumbUrl ? ' pick-card-with-cover' : ''}" style="border-left:3px solid var(--red);">
       ${p.image_url ? `<img src="${esc(p.image_url)}" class="card-image" loading="lazy" onerror="this.style.display='none'">` : ''}
-      ${thumbUrl ? `<img class="book-cover" src="${esc(thumbUrl)}" alt="${esc(p.title)} cover" loading="lazy" onerror="this.style.display='none'">` : ''}
+      ${thumbUrl ? `<img class="book-cover-sm" src="${esc(thumbUrl)}" alt="${esc(p.title)} cover" loading="lazy" onerror="this.style.display='none'">` : ''}
       <div class="pick-body">
         <div class="pick-top" style="margin-top:${p.image_url ? '10px' : '0'};">
           <div class="pick-title">${esc(p.title)}</div>
