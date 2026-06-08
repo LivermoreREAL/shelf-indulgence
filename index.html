@@ -1015,7 +1015,8 @@ function renderDeck() {
     el.innerHTML = `<div class="empty"><div class="icon">🔖</div><p>No nominations yet.<br>Add books that were suggested but not selected.</p></div>`;
     return;
   }
-  el.innerHTML = deckData.map((b, i) => {
+  const sorted = [...deckData].sort((a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: 'base' }));
+  el.innerHTML = sorted.map((b, i) => {
     const hasCover = !!b.cover_url;
     const imgEl = hasCover
       ? `<img class="book-cover" src="${esc(b.cover_url)}" alt="${esc(b.title)} cover" loading="lazy"
