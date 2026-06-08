@@ -1014,9 +1014,17 @@ function renderDeck() {
     el.innerHTML = `<div class="empty"><div class="icon">🔖</div><p>No nominations yet.<br>Add books that were suggested but not selected.</p></div>`;
     return;
   }
-  el.innerHTML = deckData.map((b, i) => `
+  el.innerHTML = deckData.map((b, i) => {
+    const hasCover = !!b.cover_url;
+    const imgEl = hasCover
+      ? `<img class="book-cover" src="${esc(b.cover_url)}" alt="${esc(b.title)} cover" loading="lazy"
+             onerror="this.style.display='none';this.nextElementSibling.style.display='block'">`
+      : '';
+    const spineStyle = hasCover ? 'display:none;' : '';
+    return `
     <div class="book-card">
-      <div class="spine" style="background:${spineColor(i)};"></div>
+      ${imgEl}
+      <div class="spine" style="background:${spineColor(i)};${spineStyle}"></div>
       <div class="book-info">
         <div class="book-title">${esc(b.title)}</div>
         ${b.author ? `<div class="book-author">${esc(b.author)}</div>` : ''}
@@ -1026,8 +1034,8 @@ function renderDeck() {
         ${cardActions('on_deck', b.id)}
       </div>
       <button class="del-btn" onclick="deleteDeck(${b.id})" title="Remove">✕</button>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 }
 
 // ── RENDER: MEMBER PICKS ──
@@ -1161,12 +1169,17 @@ async function submitForm(e) {
   btn.textContent = 'Saving…';
 
   if (mode === 'deck') {
+    const author = document.getElementById('fAuthor').value.trim() || null;
+    btn.textContent = 'Fetching cover…';
+    const cover_url = await fetchCoverUrl(title, author);
+    btn.textContent = 'Saving…';
     const row = {
       title,
-      author:          document.getElementById('fAuthor').value.trim() || null,
+      author,
       suggested_by:    document.getElementById('fSugBy').value || null,
       category:        document.getElementById('fCategory').value.trim() || null,
       goodreads_genre: document.getElementById('fGoodreadsGenre').value.trim() || null,
+      cover_url,
     };
     const saved = await dbInsert('on_deck', row);
     if (saved) { deckData.unshift(saved); renderDeck(); }
@@ -1225,6 +1238,17 @@ function esc(str) {
   return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+
+// ── AUTO COVER FETCH (Open Library) ──
+async function fetchCoverUrl(title, author) {
+  try {
+    const q = encodeURIComponent(title) + (author ? '&author=' + encodeURIComponent(author) : '');
+    const res = await fetch('https://openlibrary.org/search.json?title=' + q + '&limit=1');
+    const json = await res.json();
+    const coverId = json.docs && json.docs[0] && json.docs[0].cover_i;
+    return coverId ? 'https://covers.openlibrary.org/b/id/' + coverId + '-M.jpg' : null;
+  } catch(e) { return null; }
+}
 
 // ── RENDER: GENRE GUIDE ──
 const GENRES = [
