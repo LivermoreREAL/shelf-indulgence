@@ -626,6 +626,14 @@
     .commenting-as { font-size: 11px; color: var(--muted); margin-top: 6px; }
     .commenting-as a { color: var(--blue); cursor: pointer; margin-left: 4px; text-decoration: underline; }
 
+    /* ── PICK CARD WITH COVER (flex layout) ── */
+    .pick-card-with-cover {
+      display: flex;
+      align-items: flex-start;
+      gap: 13px;
+    }
+    .pick-body { flex: 1; min-width: 0; }
+
     /* ── BOOK COVER THUMBNAIL ── */
     .book-cover {
       width: 62px;
@@ -1050,20 +1058,25 @@ function renderPicks() {
     el.innerHTML = `<div class="empty"><div class="icon">✨</div><p>No picks here yet.<br>Add your first recommendation!</p></div>`;
     return;
   }
-  el.innerHTML = data.map(p => `
-    <div class="pick-card">
+  el.innerHTML = data.map(p => {
+    const thumbUrl = !p.image_url && p.cover_url ? p.cover_url : null;
+    return `
+    <div class="pick-card${thumbUrl ? ' pick-card-with-cover' : ''}">
       ${p.image_url ? `<img src="${esc(p.image_url)}" class="card-image" loading="lazy" onerror="this.style.display='none'">` : ''}
-      <div class="pick-top" style="margin-top:${p.image_url ? '10px' : '0'};">
-        <div class="pick-title">${esc(p.title)}</div>
-        <span class="type-badge type-${p.type}">${typeName(p.type)}</span>
+      ${thumbUrl ? `<img class="book-cover" src="${esc(thumbUrl)}" alt="${esc(p.title)} cover" loading="lazy" onerror="this.style.display='none'">` : ''}
+      <div class="pick-body">
+        <div class="pick-top" style="margin-top:${p.image_url ? '10px' : '0'};">
+          <div class="pick-title">${esc(p.title)}</div>
+          <span class="type-badge type-${p.type}">${typeName(p.type)}</span>
+        </div>
+        ${p.author ? `<div class="pick-author">by ${esc(p.author)}</div>` : ''}
+        <div class="pick-who">👤 ${esc(p.member)}</div>
+        ${p.note ? `<div class="pick-note">${esc(p.note)}</div>` : ''}
+        <button class="del-btn" style="float:right;margin-top:-10px;" onclick="deletePick(${p.id}, ${JSON.stringify(p.image_url || '')})" title="Remove">✕</button>
+        ${cardActions('member_picks', p.id)}
       </div>
-      ${p.author ? `<div class="pick-author">by ${esc(p.author)}</div>` : ''}
-      <div class="pick-who">👤 ${esc(p.member)}</div>
-      ${p.note ? `<div class="pick-note">${esc(p.note)}</div>` : ''}
-      <button class="del-btn" style="float:right;margin-top:-10px;" onclick="deletePick(${p.id}, ${JSON.stringify(p.image_url || '')})" title="Remove">✕</button>
-      ${cardActions('member_picks', p.id)}
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 }
 
 // ── RENDER: SKIP LIST ──
@@ -1075,19 +1088,24 @@ function renderSkip() {
     el.innerHTML = `<div class="empty"><div class="icon">🚫</div><p>Nothing here yet.<br>Add something you wish you hadn't read, watched, or wasted time on.</p></div>`;
     return;
   }
-  el.innerHTML = data.map(p => `
-    <div class="pick-card" style="border-left:3px solid var(--red);">
+  el.innerHTML = data.map(p => {
+    const thumbUrl = !p.image_url && p.cover_url ? p.cover_url : null;
+    return `
+    <div class="pick-card${thumbUrl ? ' pick-card-with-cover' : ''}" style="border-left:3px solid var(--red);">
       ${p.image_url ? `<img src="${esc(p.image_url)}" class="card-image" loading="lazy" onerror="this.style.display='none'">` : ''}
-      <div class="pick-top" style="margin-top:${p.image_url ? '10px' : '0'};">
-        <div class="pick-title">${esc(p.title)}</div>
-        <span class="type-badge type-${p.type}">${typeName(p.type)}</span>
+      ${thumbUrl ? `<img class="book-cover" src="${esc(thumbUrl)}" alt="${esc(p.title)} cover" loading="lazy" onerror="this.style.display='none'">` : ''}
+      <div class="pick-body">
+        <div class="pick-top" style="margin-top:${p.image_url ? '10px' : '0'};">
+          <div class="pick-title">${esc(p.title)}</div>
+          <span class="type-badge type-${p.type}">${typeName(p.type)}</span>
+        </div>
+        <div class="pick-who">👤 ${esc(p.member)}</div>
+        ${p.reason ? `<div class="skip-reason">⚠️ ${esc(p.reason)}</div>` : ''}
+        <button class="del-btn" style="float:right;margin-top:-10px;" onclick="deleteSkip(${p.id}, ${JSON.stringify(p.image_url || '')})" title="Remove">✕</button>
+        ${cardActions('skip_list', p.id)}
       </div>
-      <div class="pick-who">👤 ${esc(p.member)}</div>
-      ${p.reason ? `<div class="skip-reason">⚠️ ${esc(p.reason)}</div>` : ''}
-      <button class="del-btn" style="float:right;margin-top:-10px;" onclick="deleteSkip(${p.id}, ${JSON.stringify(p.image_url || '')})" title="Remove">✕</button>
-      ${cardActions('skip_list', p.id)}
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 }
 
 // ── NAV ──
@@ -1191,10 +1209,16 @@ async function submitForm(e) {
     const member = document.getElementById('fMember').value;
     const type   = document.getElementById('fType').value;
     if (!member || !type) { alert('Please select your name and type.'); btn.disabled = false; return; }
+    const author = document.getElementById('fAuthor').value.trim() || null;
+    let cover_url = null;
+    if (!image_url) {
+      btn.textContent = 'Fetching cover…';
+      cover_url = await fetchCoverUrl(title, author);
+      btn.textContent = 'Saving…';
+    }
     const row = {
-      member, type, title, image_url,
-      author: document.getElementById('fAuthor').value.trim() || null,
-      note:   document.getElementById('fNote').value.trim() || null,
+      member, type, title, image_url, author, cover_url,
+      note: document.getElementById('fNote').value.trim() || null,
     };
     const saved = await dbInsert('member_picks', row);
     if (saved) { picksData.unshift(saved); renderPicks(); }
@@ -1204,8 +1228,14 @@ async function submitForm(e) {
     const member = document.getElementById('fMember').value;
     const type   = document.getElementById('fType').value;
     if (!member || !type) { alert('Please select your name and type.'); btn.disabled = false; return; }
+    let cover_url = null;
+    if (!image_url) {
+      btn.textContent = 'Fetching cover…';
+      cover_url = await fetchCoverUrl(title, null);
+      btn.textContent = 'Saving…';
+    }
     const row = {
-      member, type, title, image_url,
+      member, type, title, image_url, cover_url,
       reason: document.getElementById('fReason').value.trim() || null,
     };
     const saved = await dbInsert('skip_list', row);
