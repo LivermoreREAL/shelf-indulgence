@@ -733,61 +733,18 @@
 
   <div class="sub-label" style="margin-top:16px;">Currently Reading</div>
   <div class="book-card" style="border-left: 4px solid var(--green);">
-    <img class="book-cover" src="https://covers.openlibrary.org/b/id/8572526-M.jpg" alt="Children of Blood and Bone cover" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+    <img class="book-cover" src="https://covers.openlibrary.org/b/id/2352930-M.jpg" alt="Marie Antoinette: The Journey cover" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
     <div class="spine" style="background:var(--green);display:none;"></div>
     <div class="book-info">
-      <div class="book-title">Children of Blood and Bone</div>
-      <div class="book-author">Tomi Adeyemi</div>
-      <div class="book-meta">📍 July 2026 meeting</div>
+      <div class="book-title">Marie Antoinette: The Journey</div>
+      <div class="book-author">Antonia Fraser</div>
+      <div class="book-meta">📍 November 2026 meeting · Historical Non-Fiction</div>
+      <div class="book-meta" style="color:var(--muted);font-size:11px;">Discussion lead: Kitera</div>
     </div>
     <span class="now-badge">Reading Now</span>
   </div>
 
   <div class="sub-label">Coming Up</div>
-
-  <div class="book-card">
-    <img class="book-cover" src="https://covers.openlibrary.org/b/id/12859975-M.jpg" alt="Tomorrow, and Tomorrow, and Tomorrow cover" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
-    <div class="spine" style="background:#6B5CA5;display:none;"></div>
-    <div class="book-info">
-      <div class="book-title">Tomorrow, and Tomorrow, and Tomorrow</div>
-      <div class="book-author">Gabrielle Zevin</div>
-      <div class="book-meta">📅 August 2026 · Contemporary Literary Fiction</div>
-      <div class="book-meta" style="color:var(--muted);font-size:11px;">Discussion lead: Danielle</div>
-    </div>
-  </div>
-
-  <div class="book-card">
-    <img class="book-cover" src="https://covers.openlibrary.org/b/id/13338287-M.jpg" alt="Clytemnestra cover" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
-    <div class="spine" style="background:#C4A882;display:none;"></div>
-    <div class="book-info">
-      <div class="book-title">Clytemnestra</div>
-      <div class="book-author">Costanza Casati</div>
-      <div class="book-meta">📅 September 2026 · Classic Lit (Feminist Retelling)</div>
-      <div class="book-meta" style="color:var(--muted);font-size:11px;">Discussion lead: Kitera</div>
-    </div>
-  </div>
-
-  <div class="book-card">
-    <img class="book-cover" src="https://covers.openlibrary.org/b/id/14428466-M.jpg" alt="Bluebird, Bluebird cover" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
-    <div class="spine" style="background:#F4B942;display:none;"></div>
-    <div class="book-info">
-      <div class="book-title">Bluebird, Bluebird</div>
-      <div class="book-author">Attica Locke</div>
-      <div class="book-meta">📅 October 2026 · Mystery</div>
-      <div class="book-meta" style="color:var(--muted);font-size:11px;">Discussion lead: Nelia</div>
-    </div>
-  </div>
-
-  <div class="book-card">
-    <img class="book-cover" src="https://covers.openlibrary.org/b/id/2352930-M.jpg" alt="Marie Antoinette: The Journey cover" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
-    <div class="spine" style="background:#3A6EA5;display:none;"></div>
-    <div class="book-info">
-      <div class="book-title">Marie Antoinette: The Journey</div>
-      <div class="book-author">Antonia Fraser</div>
-      <div class="book-meta">📅 November 2026 · Historical Non-Fiction</div>
-      <div class="book-meta" style="color:var(--muted);font-size:11px;">Discussion lead: Kitera</div>
-    </div>
-  </div>
 
   <div class="book-card">
     <img class="book-cover" src="https://m.media-amazon.com/images/S/compressed.photo.goodreads.com/books/1759791062i/242341816.jpg" alt="Cookies &amp; Claws cover" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
@@ -983,6 +940,10 @@ const SPINE_COLORS = [
 function spineColor(i) { return SPINE_COLORS[i % SPINE_COLORS.length]; }
 
 const BOOKS_READ = [
+  { title: "Bluebird, Bluebird",                                author: "Attica Locke",            meeting: "October 2026",   cover: 14428466 },
+  { title: "Clytemnestra",                                      author: "Costanza Casati",         meeting: "September 2026", cover: 13338287 },
+  { title: "Tomorrow, and Tomorrow, and Tomorrow",              author: "Gabrielle Zevin",         meeting: "August 2026",    cover: 12859975 },
+  { title: "Children of Blood and Bone",                        author: "Tomi Adeyemi",            meeting: "July 2026",      cover: 8572526  },
   { title: "The Book of the Unnamed Midwife",                   author: "Meg Elison",              meeting: "June 2026",      cover: 8578655  },
   { title: "Brown Girls",                                        author: "Daphne Palasi Andreades", meeting: "May 2026",       cover: 11029524 },
   { title: "The Enchanted Hacienda",                            author: "J.C. Cervantes",          meeting: "April 2026",     cover: 14349362 },
